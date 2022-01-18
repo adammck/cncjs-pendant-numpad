@@ -76,61 +76,33 @@ if (options.list) {
     return;
 }
 
-var store = {
-    controller: {
-        state: {},
-        settings: {}
-    },
-    sender: {
-        status: {}
-    }
-};
-
-var kbdevent = {
-    l_control: 0,
-    l_shift: 0,
-    l_alt: 0,
-    l_meta: 0,
-    r_control: 0,
-    r_shift: 0,
-    r_alt: 0,
-    r_meta: 0,
-    key: 0, // Normal keys
-    extra: 0, // Advanced Keys or Special Keys
-    repeating: 0, // If it is repating a movement
-    move: 1, // Actually move size
-    default_move: 1,
-    jog_feed_rate: 1000,
-};
-
 var createServer = function(options) {
+
+    // TODO: Do we actually need to store this stuff?
+    var store = {
+        controller: {
+            state: {},
+            settings: {}
+        },
+        sender: {
+            status: {}
+        }
+    };
+
+    var jog_distance = 1; // mm
+    var jog_feed_rate = 1000; // feed rate
+
     serverMain(options, function(err, socket) {
-        // Grbl
         socket.on("Grbl:state", function(state) {
+            //console.log("store.controller.state=%o", state);
             store.controller.state = state;
         });
         socket.on("Grbl:settings", function(settings) {
+            //console.log("store.controller.settings=%o", settings);
             store.controller.settings = settings;
         });
-
-        // Smoothie
-        socket.on("Smoothie:state", function(state) {
-            store.controller.state = state;
-        });
-        socket.on("Smoothie:settings", function(settings) {
-            store.controller.settings = settings;
-        });
-
-        // TinyG
-        socket.on("TinyG:state", function(state) {
-            store.controller.state = state;
-        });
-        socket.on("TinyG:settings", function(settings) {
-            store.controller.settings = settings;
-        });
-
-        // Sender
         socket.on("sender:status", function(data) {
+            //console.log("store.sender.status=%o", data);
             store.sender.status = data;
         });
 
@@ -147,57 +119,38 @@ var createServer = function(options) {
 
         console.log("Keyboard HID Address:", findPath(0));
 
-
         var keyboard_main = new hid.HID(findPath(0));
 
         keyboard_main.on("data", function(data) {
-            var recv = data.toJSON().data;
-            var bits = recv.shift();
-            kbdevent.l_control = (bits & 1) !== 0;
-            kbdevent.l_shift = (bits & 2) !== 0;
-            kbdevent.l_alt = (bits & 4) !== 0;
-            kbdevent.l_meta = (bits & 8) !== 0;
-            kbdevent.r_control = (bits & 16) !== 0;
-            kbdevent.r_shift = (bits & 32) !== 0;
-            kbdevent.r_alt = (bits & 64) !== 0;
-            kbdevent.r_meta = (bits & 128) !== 0;
-            recv.shift();
-            kbdevent.key = recv.shift();
-            sendToController();
-        });
-
-        function sendToController() {
 
             // For key codes, see sect. 10 (pg. 82) of USB HID Usage Tables:
             // https://usb.org/sites/default/files/hut1_22.pdf
+            var key = data.toJSON().data[2];
+            //console.log("key: 0x", key.toString(16));
 
-            // Calculate move size modifiers
-            kbdevent.move = kbdevent.default_move;
-
-            // ignore "no key pressed" events.
-            if (kbdevent.key == 0) {
+            // Ignore "no key pressed" events.
+            if (key == 0) {
                 return;
             }
 
             // Ignore numlock on/off events. We listen for both of the relevant
             // codes for each key (e.g. LEFT + FOUR) below, so these are noise.
-            if (kbdevent.key == 0x53) {
+            if (key == 0x53) {
                 return;
             }
 
-            console.log("key: 0x", kbdevent.key.toString(16));
-            switch (kbdevent.key) {
+            switch (key) {
 
                 // CHANGE JOG SPEED
 
                 case 0x54: // Keypad /
-                    kbdevent.default_move = 0.1;
+                    jog_distance = 0.1;
                     break;
                 case 0x55: // Keypad *
-                    kbdevent.default_move = 1;
+                    jog_distance = 1;
                     break;
                 case 0x2A: // Keyboard DELETE (Backspace)
-                    kbdevent.default_move = 10;
+                    jog_distance = 10;
                     break;
 
                 // JOG X/Y/Z
@@ -208,30 +161,30 @@ var createServer = function(options) {
 
                 case 0x5C: // Keypad 4 and Left Arrow
                 case 0x50: // Keyboard LeftArrow
-                    socket.emit("write", options.port, "$J=G91 G21 X-" + kbdevent.move + " F" + kbdevent.jog_feed_rate + ";\n");
+                    socket.emit("write", options.port, "$J=G91 G21 X-" + jog_distance + " F" + jog_feed_rate + ";\n");
                     break;
 
                 case 0x4F: // Keyboard RightArrow
                 case 0x5E: // Keypad 6 and Right Arrow
-                    socket.emit("write", options.port, "$J=G91 G21 X" + kbdevent.move + " F" + kbdevent.jog_feed_rate + ";\n");
+                    socket.emit("write", options.port, "$J=G91 G21 X" + jog_distance + " F" + jog_feed_rate + ";\n");
                     break;
 
                 case 0x51: // Keyboard DownArrow
                 case 0x5A: // Keypad 2 and Down Arrow
-                    socket.emit("write", options.port, "$J=G91 G21 Y-" + kbdevent.move + " F" + kbdevent.jog_feed_rate + ";\n");
+                    socket.emit("write", options.port, "$J=G91 G21 Y-" + jog_distance + " F" + jog_feed_rate + ";\n");
                     break;
 
                 case 0x52: // Keyboard UpArrow
                 case 0x60: // Keypad 8 and Up Arrow
-                    socket.emit("write", options.port, "$J=G91 G21 Y" + kbdevent.move + " F" + kbdevent.jog_feed_rate + ";\n");
+                    socket.emit("write", options.port, "$J=G91 G21 Y" + jog_distance + " F" + jog_feed_rate + ";\n");
                     break;
 
                 case 0x57: // Keypad +
-                    socket.emit("write", options.port, "$J=G91 G21 Z-" + kbdevent.move + " F" + kbdevent.jog_feed_rate + ";\n");
+                    socket.emit("write", options.port, "$J=G91 G21 Z-" + jog_distance + " F" + jog_feed_rate + ";\n");
                     break;
 
                 case 0x56: // Keypad -
-                    socket.emit("write", options.port, "$J=G91 G21 Z" + kbdevent.move + " F" + kbdevent.jog_feed_rate + ";\n");
+                    socket.emit("write", options.port, "$J=G91 G21 Z" + jog_distance + " F" + jog_feed_rate + ";\n");
                     break;
 
                 // FEED HOLD
@@ -251,7 +204,7 @@ var createServer = function(options) {
                 default:
                     break;
             }
-        }
+         });
     });
 };
 
