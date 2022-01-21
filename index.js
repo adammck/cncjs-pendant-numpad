@@ -26,7 +26,6 @@ module.exports = function(options, callback) {
     options.baudrate = get(options, 'baudrate', 115200);
     options.vendorId = get(options, 'vendorid', 1578);
     options.productId = get(options, 'productid',16641);
-    options.probeOffset = get(options, 'probeoffset', '1.56');
     options.socketAddress = get(options, 'socketAddress', 'localhost');
     options.socketPort = get(options, 'socketPort', 8000);
     options.controllerType = get(options, 'controllerType', 'Grbl');

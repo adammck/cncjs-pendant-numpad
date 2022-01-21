@@ -76,7 +76,6 @@ Hotkeys:
 | 2 (DOWN)   	| move -Y                      	|
 | 3 (PG DN)  	| move +X and -Y               	|
 | 0 (INS)    	| unlock ($X GRBL)                       	|
-| . (DEL)    	| probe tool offset            	|
 | -          	| z axis up                    	|
 | +          	| z axis down                  	|
 | ENTER      	| home X and Y                 	|
@@ -85,13 +84,6 @@ Hotkeys:
 
 You can download a SVG file for labels [here](docs/key_labels.svg).
 
-### Probe Offset
-The probe offset default is set to 1.56 mm ( i am using a piece of PCB with a thickness of 1.56 mm). You can override this by giving the pendant
-an extra start parameter for probe offset.
-
-```
---probeoffset <value>
-```
 
 ### Using with other Num Pad's than LogiLink
 

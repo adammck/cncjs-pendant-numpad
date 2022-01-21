@@ -34,11 +34,6 @@ program
         "30d"
     )
     .option(
-        "--probeoffset <offset>",
-        "offset (thickness) for Z probe",
-        '1.56'
-    )
-    .option(
         "--vendorid <vendor>",
         "Vendor ID of USB HID device"
     )
@@ -59,7 +54,6 @@ var options = {
     accessTokenLifetime: program.accessTokenLifetime,
     vendorid: program.vendorid,
     productid: program.productid,
-    probeoffset: program.probeoffset
 };
 
 if (options.list) {
