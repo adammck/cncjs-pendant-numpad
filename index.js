@@ -28,7 +28,6 @@ module.exports = function(options, callback) {
     options.productId = get(options, 'productid',16641);
     options.socketAddress = get(options, 'socketAddress', 'localhost');
     options.socketPort = get(options, 'socketPort', 8000);
-    options.controllerType = get(options, 'controllerType', 'Grbl');
     options.accessTokenLifetime = get(options, 'accessTokenLifetime', '30d');
 
     if (options.vendorId != 1578) {
@@ -64,7 +63,7 @@ module.exports = function(options, callback) {
         // Open port
         socket.emit('open', options.port, {
             baudrate: Number(options.baudrate),
-            controllerType: options.controllerType
+            controllerType: "Grbl", // only GRBL is supported by this fork.
         });
     });
 

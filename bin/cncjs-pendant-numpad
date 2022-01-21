@@ -24,11 +24,6 @@ program
     )
     .option("--socket-port <port>", "socket port (default: 8000)", 8000)
     .option(
-        "--controller-type <type>",
-        "controller type: Grbl|Smoothie|TinyG (default: Grbl)",
-        "Grbl"
-    )
-    .option(
         "--access-token-lifetime <lifetime>",
         "access token lifetime in seconds or a time span string (default: 30d)",
         "30d"
@@ -50,7 +45,6 @@ var options = {
     baudrate: program.baudrate,
     socketAddress: program.socketAddress,
     socketPort: program.socketPort,
-    controllerType: program.controllerType,
     accessTokenLifetime: program.accessTokenLifetime,
     vendorid: program.vendorid,
     productid: program.productid,
